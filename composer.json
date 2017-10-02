@@ -1,0 +1,26 @@
+{
+    "name": "ozpital/latest-and-greatest",
+    "description": "Plucking stats and latest posts from your social media to display on your site.",
+    "keywords": ["socialmedia", "facebook", "instagram", "pinterest", "twitter", "youtube", "latest", "posts", "fav", "likes", "subscriber", "followers", "count"],
+    "type": "project",
+    "require": {
+        "vlucas/phpdotenv": "^2.4.0",
+        "abraham/twitteroauth": "^0.7.4"
+    },
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Laurence Archer",
+            "email": "l.archer@ozpital.com",
+            "homepage": "https://ozpital.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "LatestAndGreatest\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.2"
+    }
+}
