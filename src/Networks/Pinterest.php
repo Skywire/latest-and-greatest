@@ -129,6 +129,9 @@ class Pinterest extends LatestAndGreatest {
             // Initalise dom document
             $doc = new DOMDocument();
 
+            // set error level
+            $internalErrors = libxml_use_internal_errors(true);
+
             // Parse html string from pinterest
             $content = $doc->loadHTML(mb_convert_encoding($pin->description, 'HTML-ENTITIES', 'UTF-8'));
 
@@ -140,6 +143,9 @@ class Pinterest extends LatestAndGreatest {
 
             // Get description
             $description = $doc->getElementsByTagName('p')[1];
+
+            // Restore error level
+            libxml_use_internal_errors($internalErrors);
 
             // Populate array
             $array[] = [
