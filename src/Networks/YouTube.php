@@ -97,11 +97,11 @@ class YouTube extends LatestAndGreatest {
      * Get the video statistics API enpoint
      * @return String
      */
-    public function getVideoStatisticsApiEndpoint($videoId) {
+    public function getVideoDetailsApiEndpoint($videoId) {
         $args = [
             'key' => $this->apiKey,
             'id' => $videoId,
-            'part' => 'statistics'
+            'part' => 'statistics,player'
         ];
 
         return $this->endpoint . 'videos?' . http_build_query($args);
@@ -213,6 +213,7 @@ class YouTube extends LatestAndGreatest {
                 'videoId' => $video->id->videoId,
                 'title' => $video->snippet->title,
                 'description' => $video->snippet->description,
+                'date' => strtotime($video->snippet->publishedAt),
                 'thumbnail' => [
                     'src' => $video->snippet->thumbnails->high->url,
                     'width' => $video->snippet->thumbnails->high->width,
@@ -220,20 +221,21 @@ class YouTube extends LatestAndGreatest {
                 ]
             ];
 
-            $videoStatisticsResult = @file_get_contents($this->getVideoStatisticsApiEndpoint($video->id->videoId));
+            $videoDetailsResult = @file_get_contents($this->getVideoDetailsApiEndpoint($video->id->videoId));
 
-            if (!$videoStatisticsResult) {
+            if (!$videoDetailsResult) {
                 continue;
             }
 
-            $videoStatisticsResultObject = json_decode($videoStatisticsResult);
+            $videoDetailsResultObject = json_decode($videoDetailsResult);
 
-            foreach ($videoStatisticsResultObject->items as $videoItem) {
+            foreach ($videoDetailsResultObject->items as $videoItem) {
                 $array[$key]['views'] = $videoItem->statistics->viewCount;
                 $array[$key]['likes'] = $videoItem->statistics->likeCount;
                 $array[$key]['dislikes'] = $videoItem->statistics->dislikeCount;
                 $array[$key]['favourites'] = $videoItem->statistics->favoriteCount;
                 $array[$key]['comments'] = $videoItem->statistics->commentCount;
+                $array[$key]['iframe'] = $videoItem->player->embedHtml;
             }
         }
 
