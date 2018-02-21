@@ -27,6 +27,12 @@ class Pinterest extends LatestAndGreatest {
      */
     protected $endpoint = 'http://pinterest.com/';
 
+
+    /**
+     * @var String
+     */
+    protected $userData;
+
     /**
      * This fires when instance created
      */
@@ -46,7 +52,7 @@ class Pinterest extends LatestAndGreatest {
     }
 
     /**
-     * Set the page name
+     * Set the user name
      */
     public function setUserName() {
         if (!getenv('PINTEREST_USERNAME')) {
@@ -54,6 +60,13 @@ class Pinterest extends LatestAndGreatest {
         }
 
         $this->userName = getenv('PINTEREST_USERNAME');
+    }
+
+    /**
+     * Get the user name
+     */
+    public function getUserName() {
+        return $this->userName;
     }
 
     /**
@@ -65,12 +78,52 @@ class Pinterest extends LatestAndGreatest {
     }
 
     /**
+     * Get the endpoint
+     * @return String
+     */
+    public function getUserData() {
+        if (!$this->userData) {
+            $this->userData = @get_meta_tags($this->getUserEndpoint());
+        }
+
+        return $this->userData;
+    }
+
+    /**
+     * Get page profile array
+     * @return Array
+     */
+    public function getProfileArray() {
+        $array = [
+            'username' => $this->getUserName()
+        ];
+
+        $endpointResult = $this->getUserData();
+        if ($endpointResult) {
+            // Get image as data string
+            $imageDataString = @file_get_contents($endpointResult['og:image']);
+
+            // Get image dimensions and mime type
+            $imageData = getimagesizefromstring($imageDataString);
+
+            // Build relevant array
+            $array['picture'] = [
+                'width' => $imageData[0],
+                'height' => $imageData[0],
+                'src' => 'data:'. $imageData['mime'] .';base64,'. base64_encode($imageDataString)
+            ];
+        }
+
+        return $array;
+    }
+
+    /**
      * Get statistics array
      * @return Array
      */
     public function getStatisticsArray() {
         // Get meta data from page
-        $endpointResult = @get_meta_tags($this->getUserEndpoint());
+        $endpointResult = $this->getUserData();
         if (!$endpointResult) {
             throw new Exception('No meta data returned from endpoint');
         }

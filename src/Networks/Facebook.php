@@ -94,6 +94,13 @@ class Facebook extends LatestAndGreatest {
     }
 
     /**
+     * Get the page name
+     */
+    public function getPageName() {
+        return $this->pageName;
+    }
+
+    /**
      * Get the likes endpoint
      * @return String
      */
@@ -104,6 +111,19 @@ class Facebook extends LatestAndGreatest {
         ];
 
         return $this->endpoint . $this->pageName . '/?' . urldecode(http_build_query($args));
+    }
+
+    /**
+     * Get the profile picture endpoint
+     * @return String
+     */
+    public function getPagePictureApiEndpoint() {
+        $args = [
+            'access_token' => $this->appId . '|' . $this->appSecret,
+            'type' => 'large'
+        ];
+
+        return $this->endpoint . $this->pageName . '/picture?' . urldecode(http_build_query($args));
     }
 
     /**
@@ -155,6 +175,32 @@ class Facebook extends LatestAndGreatest {
         ];
 
         return $this->endpoint . $postId . '/comments?' . urldecode(http_build_query($args));
+    }
+
+    /**
+     * Get page profile array
+     * @return Array
+     */
+    public function getProfileArray() {
+        $array = [
+            'username' => $this->getPageName()
+        ];
+
+        // Get profile image data from API
+        $pictureEndpointResult = @file_get_contents($this->getPagePictureApiEndpoint());
+        if ($pictureEndpointResult) {
+            // Get image dimensions and mime type
+            $imageData = getimagesizefromstring($pictureEndpointResult);
+
+            // Build relevant array
+            $array['picture'] = [
+                'width' => $imageData[0],
+                'height' => $imageData[0],
+                'src' => 'data:'. $imageData['mime'] .';base64,'. base64_encode($pictureEndpointResult)
+            ];
+        }
+
+        return $array;
     }
 
     /**
@@ -269,6 +315,11 @@ class Facebook extends LatestAndGreatest {
         return (array) $object->data[0]->media;
     }
 
+    /**
+     * Get a posts likes count
+     * @param  Integer $postId
+     * @return Integer
+     */
     public function getPostLikesCount($postId) {
         // Check for Post ID
         if (!$postId) {
@@ -293,6 +344,11 @@ class Facebook extends LatestAndGreatest {
         return (int) $object->summary->total_count;
     }
 
+    /**
+     * Get a posts comments count
+     * @param  Integer $postId
+     * @return Integer
+     */
     public function getPostCommentsCount($postId) {
         // Check for Post ID
         if (!$postId) {

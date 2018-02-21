@@ -165,7 +165,9 @@ class LatestAndGreatest {
         }
 
         // Get current stats
-        // $statistics = $this->getChannelStatisticsDataArray();
+        $profile = $this->getProfileArray();
+
+        // Get current stats
         $statistics = $this->getStatisticsArray();
 
         // Get latest data
@@ -173,6 +175,7 @@ class LatestAndGreatest {
 
         // Combine arrays
         $data = [
+            'profile' => $profile,
             'statistics' => $statistics,
             'latest' => $latest
         ];
@@ -206,7 +209,19 @@ class LatestAndGreatest {
     }
 
     /**
-     * Get total likes
+     * Get profile
+     * @return Array
+     */
+    public function getProfile() {
+        if (!isset($this->data->profile)) {
+            return [];
+        }
+
+        return $this->data->profile;
+    }
+
+    /**
+     * Get page/profile stats
      * @return Array
      */
     public function getStats() {

@@ -47,6 +47,16 @@ class Twitter extends LatestAndGreatest {
     protected $connection;
 
     /**
+     * @var String
+     */
+    protected $userName;
+
+    /**
+     * @var String
+     */
+    protected $userData;
+
+    /**
      * This fires when instance created
      */
     public function __construct($options = []) {
@@ -56,6 +66,7 @@ class Twitter extends LatestAndGreatest {
             $this->setApiSecret();
             $this->setAccessToken();
             $this->setAccessTokenSecret();
+            $this->setUserName();
             $this->createConnection();
             parent::init();
         } catch (Exception $e) {
@@ -113,6 +124,24 @@ class Twitter extends LatestAndGreatest {
     }
 
     /**
+     * Set the user name
+     */
+    public function setUserName() {
+        if (!getenv('TWITTER_USERNAME')) {
+            throw new Exception('No TWITTER_USERNAME defined in your .env');
+        }
+
+        $this->userName = getenv('TWITTER_USERNAME');
+    }
+
+    /**
+     * Get the user name
+     */
+    public function getUserName() {
+        return $this->userName;
+    }
+
+    /**
      * Create a connection to the api
      */
     public function createConnection() {
@@ -125,17 +154,56 @@ class Twitter extends LatestAndGreatest {
     }
 
     /**
+     * Create a connection to the api
+     */
+    public function getUserData() {
+        if (!$this->userData) {
+            $this->userData = $this->connection->get('account/verify_credentials', [
+                'include_rts' => false,
+                'exclude_replies' => true,
+                'include_entities' => false,
+                'skip_status' => true,
+                'include_email' => false
+            ]);
+        }
+
+        return $this->userData;
+    }
+
+    /**
+     * Get page profile array
+     * @return Array
+     */
+    public function getProfileArray() {
+        $array = [
+            'username' => $this->getUserName()
+        ];
+
+        $userData = $this->getUserData();
+        if ($userData) {
+            // Get image as data string
+            $imageDataString = @file_get_contents($userData->profile_image_url_https);
+
+            // Get image dimensions and mime type
+            $imageData = getimagesizefromstring($imageDataString);
+
+            // Build relevant array
+            $array['picture'] = [
+                'width' => $imageData[0],
+                'height' => $imageData[0],
+                'src' => 'data:'. $imageData['mime'] .';base64,'. base64_encode($imageDataString)
+            ];
+        }
+
+        return $array;
+    }
+
+    /**
      * Get the statistics
      * @return Array
      */
     public function getStatisticsArray() {
-        $userData = $this->connection->get('account/verify_credentials', [
-            'include_rts' => false,
-            'exclude_replies' => true,
-            'include_entities' => false,
-            'skip_status' => true,
-            'include_email' => false
-        ]);
+        $userData = $this->getUserData();
 
         // Create usable data array
         $array = [

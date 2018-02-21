@@ -19,7 +19,7 @@ class Instagram extends LatestAndGreatest {
      * Initalise the API secret variable
      * @var String
      */
-    protected $pageName;
+    protected $userName;
 
     /**
      * Define the API end point
@@ -63,6 +63,13 @@ class Instagram extends LatestAndGreatest {
     }
 
     /**
+     * Get the page name
+     */
+    public function getUserName() {
+        return $this->userName;
+    }
+
+    /**
      * Get the Instagram API endpoint
      * @return String
      */
@@ -91,6 +98,35 @@ class Instagram extends LatestAndGreatest {
         }
 
         return $this->endpointResponse;
+    }
+
+    /**
+     * Get page profile array
+     * @return Array
+     */
+    public function getProfileArray() {
+        $array = [
+            'username' => $this->getUserName()
+        ];
+
+        // Get profile image data from API
+        $endpointResult = $this->getEndpointResponse();
+        if ($endpointResult) {
+            // Get image as data string
+            $imageDataString = @file_get_contents($endpointResult->user->profile_pic_url_hd);
+
+            // Get image dimensions and mime type
+            $imageData = getimagesizefromstring($imageDataString);
+
+            // Build relevant array
+            $array['picture'] = [
+                'width' => $imageData[0],
+                'height' => $imageData[0],
+                'src' => 'data:'. $imageData['mime'] .';base64,'. base64_encode($imageDataString)
+            ];
+        }
+
+        return $array;
     }
 
     /**

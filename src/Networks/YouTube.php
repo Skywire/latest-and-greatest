@@ -34,6 +34,11 @@ class YouTube extends LatestAndGreatest {
     protected $endpoint = 'https://www.googleapis.com/youtube/v3/';
 
     /**
+     * @var String
+     */
+    protected $userName;
+
+    /**
      * This fires when instance created
      */
     public function __construct($options = []) {
@@ -41,6 +46,7 @@ class YouTube extends LatestAndGreatest {
             parent::__construct($options);
             $this->setApiKey();
             $this->setChannelID();
+            $this->setUserName();
             parent::init();
         } catch (Exception $e) {
             echo '<pre>';
@@ -50,6 +56,24 @@ class YouTube extends LatestAndGreatest {
             echo 'Trace:' . PHP_EOL . $e->getTraceAsString(). PHP_EOL;
             echo '</pre>';
         }
+    }
+
+    /**
+     * Set the user name
+     */
+    public function setUserName() {
+        if (!getenv('YOUTUBE_USERNAME')) {
+            throw new Exception('No YOUTUBE_USERNAME defined in your .env');
+        }
+
+        $this->userName = getenv('YOUTUBE_USERNAME');
+    }
+
+    /**
+     * Get the user name
+     */
+    public function getUserName() {
+        return $this->userName;
     }
 
     /**
@@ -98,6 +122,20 @@ class YouTube extends LatestAndGreatest {
     }
 
     /**
+     * Get the YouTube channel statistics API enpoint
+     * @return String
+     */
+    public function getChannelProfileApiEndpoint() {
+        $args = [
+            'key' => $this->apiKey,
+            'id' => $this->channelID,
+            'part' => 'snippet'
+        ];
+
+        return $this->endpoint . 'channels?' . http_build_query($args);
+    }
+
+    /**
      * Set the API Key
      */
     public function setApiKey() {
@@ -117,6 +155,38 @@ class YouTube extends LatestAndGreatest {
        }
 
        $this->channelID = getenv('YOUTUBE_CHANNELID');
+    }
+
+    /**
+     * Get page profile array
+     * @return Array
+     */
+    public function getProfileArray() {
+        $array = [
+            'username' => $this->getUserName()
+        ];
+
+        // Get data from API
+        $endpointResult = @file_get_contents($this->getChannelProfileApiEndpoint());
+        if ($endpointResult) {
+
+            $object = json_decode($endpointResult);
+
+            // Get image as data string
+            $imageDataString = @file_get_contents($object->items[0]->snippet->thumbnails->high->url);
+
+            // Get image dimensions and mime type
+            $imageData = getimagesizefromstring($imageDataString);
+
+            // Build relevant array
+            $array['picture'] = [
+                'width' => $imageData[0],
+                'height' => $imageData[0],
+                'src' => 'data:'. $imageData['mime'] .';base64,'. base64_encode($imageDataString)
+            ];
+        }
+
+        return $array;
     }
 
     /**
