@@ -110,7 +110,7 @@ class Facebook extends LatestAndGreatest {
      * Get the posts endpoint
      * @return String
      */
-    public function getPagePostsApiEndpoint() {
+    public function getPostsApiEndpoint() {
         $args = [
             'access_token' => $this->appId . '|' . $this->appSecret,
             'fields' => 'posts'
@@ -123,12 +123,38 @@ class Facebook extends LatestAndGreatest {
      * Get the attachment endpoint
      * @return String
      */
-    public function getPagePostAttachmentApiEndpoint($postId) {
+    public function getPostAttachmentApiEndpoint($postId) {
         $args = [
             'access_token' => $this->appId . '|' . $this->appSecret
         ];
 
         return $this->endpoint . $postId . '/attachments?' . urldecode(http_build_query($args));
+    }
+
+    /**
+     * Get the post likes endpoint
+     * @return String
+     */
+    public function getPostLikesApiEndpoint($postId) {
+        $args = [
+            'access_token' => $this->appId . '|' . $this->appSecret,
+            'summary' => 'true'
+        ];
+
+        return $this->endpoint . $postId . '/likes?' . urldecode(http_build_query($args));
+    }
+
+    /**
+     * Get the post comments endpoint
+     * @return String
+     */
+    public function getPostCommentsApiEndpoint($postId) {
+        $args = [
+            'access_token' => $this->appId . '|' . $this->appSecret,
+            'summary' => 'true'
+        ];
+
+        return $this->endpoint . $postId . '/comments?' . urldecode(http_build_query($args));
     }
 
     /**
@@ -159,7 +185,7 @@ class Facebook extends LatestAndGreatest {
      */
     public function getPostsArray() {
         // Get data from API
-        $endpointResult = @file_get_contents($this->getPagePostsApiEndpoint());
+        $endpointResult = @file_get_contents($this->getPostsApiEndpoint());
         if (!$endpointResult) {
             throw new Exception('No data returned from endpoint');
         }
@@ -186,6 +212,7 @@ class Facebook extends LatestAndGreatest {
         // Create usable data array
         $array = [];
         foreach ($latestPosts as $post) {
+
             $array[$post['id']] = [
                 'id' => $post['id'],
                 'text' => $post['message'],
@@ -201,6 +228,10 @@ class Facebook extends LatestAndGreatest {
                     'height' => $media['image']->height,
                 ];
             }
+
+            // Get post stats
+            $array[$post['id']]['likes'] = $this->getPostLikesCount($post['id']);
+            $array[$post['id']]['comments'] = $this->getPostCommentsCount($post['id']);
         }
 
         // Remove named keys
@@ -221,7 +252,7 @@ class Facebook extends LatestAndGreatest {
         }
 
         // Get data from API
-        $endpointResult = @file_get_contents($this->getPagePostAttachmentApiEndpoint($postId));
+        $endpointResult = @file_get_contents($this->getPostAttachmentApiEndpoint($postId));
         if (!$endpointResult) {
             throw new Exception('No data returned from endpoint');
         }
@@ -236,5 +267,53 @@ class Facebook extends LatestAndGreatest {
 
         // Return media
         return (array) $object->data[0]->media;
+    }
+
+    public function getPostLikesCount($postId) {
+        // Check for Post ID
+        if (!$postId) {
+            throw new Exception('No Post ID defined');
+        }
+
+        // Get data from API
+        $endpointResult = @file_get_contents($this->getPostLikesApiEndpoint($postId));
+        if (!$endpointResult) {
+            throw new Exception('No data returned from endpoint');
+        }
+
+        // Convert to object
+        $object = json_decode($endpointResult);
+
+        // If no media, return empty array
+        if (!isset($object->summary->total_count)) {
+            return [];
+        }
+
+        // Return media
+        return (int) $object->summary->total_count;
+    }
+
+    public function getPostCommentsCount($postId) {
+        // Check for Post ID
+        if (!$postId) {
+            throw new Exception('No Post ID defined');
+        }
+
+        // Get data from API
+        $endpointResult = @file_get_contents($this->getPostCommentsApiEndpoint($postId));
+        if (!$endpointResult) {
+            throw new Exception('No data returned from endpoint');
+        }
+
+        // Convert to object
+        $object = json_decode($endpointResult);
+
+        // If no media, return empty array
+        if (!isset($object->summary->total_count)) {
+            return [];
+        }
+
+        // Return media
+        return (int) $object->summary->total_count;
     }
 }

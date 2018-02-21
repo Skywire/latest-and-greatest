@@ -70,10 +70,24 @@ class YouTube extends LatestAndGreatest {
     }
 
     /**
+     * Get the video statistics API enpoint
+     * @return String
+     */
+    public function getVideoStatisticsApiEndpoint($videoId) {
+        $args = [
+            'key' => $this->apiKey,
+            'id' => $videoId,
+            'part' => 'statistics'
+        ];
+
+        return $this->endpoint . 'videos?' . http_build_query($args);
+    }
+
+    /**
      * Get the YouTube channel statistics API enpoint
      * @return String
      */
-    public function getStatisticsApiEndpoint() {
+    public function getChannelStatisticsApiEndpoint() {
         $args = [
             'key' => $this->apiKey,
             'id' => $this->channelID,
@@ -112,6 +126,7 @@ class YouTube extends LatestAndGreatest {
     public function getPostsArray() {
         // Get data from API
         $endpointResult = @file_get_contents($this->getVideoApiEndpoint());
+
         if (!$endpointResult) {
             throw new Exception('No data returned from endpoint');
         }
@@ -122,8 +137,9 @@ class YouTube extends LatestAndGreatest {
 
         // Create usable data array
         $array = [];
-        foreach ($object->items as $video) {
-            $array[] = [
+        foreach ($object->items as $key => $video) {
+
+            $array[$key] = [
                 'videoId' => $video->id->videoId,
                 'title' => $video->snippet->title,
                 'description' => $video->snippet->description,
@@ -133,6 +149,22 @@ class YouTube extends LatestAndGreatest {
                     'height' => $video->snippet->thumbnails->high->height
                 ]
             ];
+
+            $videoStatisticsResult = @file_get_contents($this->getVideoStatisticsApiEndpoint($video->id->videoId));
+
+            if (!$videoStatisticsResult) {
+                continue;
+            }
+
+            $videoStatisticsResultObject = json_decode($videoStatisticsResult);
+
+            foreach ($videoStatisticsResultObject->items as $videoItem) {
+                $array[$key]['views'] = $videoItem->statistics->viewCount;
+                $array[$key]['likes'] = $videoItem->statistics->likeCount;
+                $array[$key]['dislikes'] = $videoItem->statistics->dislikeCount;
+                $array[$key]['favourites'] = $videoItem->statistics->favoriteCount;
+                $array[$key]['comments'] = $videoItem->statistics->commentCount;
+            }
         }
 
         return $array;
@@ -144,7 +176,7 @@ class YouTube extends LatestAndGreatest {
      */
     public function getStatisticsArray() {
         // Get data from API
-        $endpointResult = @file_get_contents($this->getStatisticsApiEndpoint());
+        $endpointResult = @file_get_contents($this->getChannelStatisticsApiEndpoint());
         if (!$endpointResult) {
             throw new Exception('No data returned from endpoint');
         }

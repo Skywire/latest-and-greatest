@@ -127,6 +127,7 @@ class Instagram extends LatestAndGreatest {
                 'text' => $post->caption,
                 'date' => $post->date,
                 'likes' => $post->likes->count,
+                'comments' => $post->comments->count,
                 'media' => [
                     'thumbnail' => $post->display_src,
                     'width' => $post->dimensions->width,

@@ -173,7 +173,6 @@ class Twitter extends LatestAndGreatest {
         // Create usable data array
         $array = [];
         foreach ($latestTweets as $tweet) {
-
             $array[$tweet->id] = [
                 'id' => $tweet->id,
                 'text' => $tweet->full_text,
@@ -189,6 +188,10 @@ class Twitter extends LatestAndGreatest {
                     'height' => $tweet->extended_entities->media[0]->sizes->large->h
                 ];
             }
+
+            // Get counts
+            $array[$tweet->id]['favourites'] = $tweet->favorite_count;
+            $array[$tweet->id]['retweets'] = $tweet->retweet_count;
         }
 
         // Remove named keys
