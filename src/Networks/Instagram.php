@@ -159,7 +159,7 @@ class Instagram extends LatestAndGreatest {
         $index = 0;
         foreach ($data->user->media->nodes as $post) {
             $posts[] = [
-                'id' => $post->id,
+                'id' => $post->code,
                 'text' => $post->caption,
                 'date' => $post->date,
                 'likes' => $post->likes->count,
