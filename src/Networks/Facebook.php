@@ -258,9 +258,8 @@ class Facebook extends LatestAndGreatest {
         // Create usable data array
         $array = [];
         foreach ($latestPosts as $post) {
-
             $array[$post['id']] = [
-                'id' => $post['id'],
+                'id' => explode('_', $post['id'])[1],
                 'text' => $post['message'],
                 'date' => strtotime($post['created_time'])
             ];
