@@ -113,7 +113,7 @@ class Instagram extends LatestAndGreatest {
         $endpointResult = $this->getEndpointResponse();
         if ($endpointResult) {
             // Get image as data string
-            $imageDataString = @file_get_contents($endpointResult->user->profile_pic_url_hd);
+            $imageDataString = @file_get_contents($endpointResult->graphql->user->profile_pic_url_hd);
 
             // Get image dimensions and mime type
             $imageData = getimagesizefromstring($imageDataString);
@@ -139,8 +139,8 @@ class Instagram extends LatestAndGreatest {
 
         // Create statistics array
         $statistics = [
-            'followers' => $data->user->followed_by->count,
-            'following' => $data->user->follows->count
+            'followers' => $data->graphql->user->edge_followed_by->count,
+            'following' => $data->graphql->user->edge_follow->count
         ];
 
         return $statistics;
@@ -157,17 +157,17 @@ class Instagram extends LatestAndGreatest {
         // Create posts array
         $posts = [];
         $index = 0;
-        foreach ($data->user->media->nodes as $post) {
+        foreach ($data->graphql->user->edge_owner_to_timeline_media->edges as $post) {
             $posts[] = [
-                'id' => $post->code,
-                'text' => $post->caption,
-                'date' => $post->date,
-                'likes' => $post->likes->count,
-                'comments' => $post->comments->count,
+                'id' => $post->node->shortcode,
+                'text' => $post->node->edge_media_to_caption->edges[0]->node->text,
+                'date' => $post->node->taken_at_timestamp,
+                'likes' => $post->node->edge_liked_by->count,
+                'comments' => $post->node->edge_media_to_comment->count,
                 'media' => [
-                    'thumbnail' => $post->display_src,
-                    'width' => $post->dimensions->width,
-                    'height' => $post->dimensions->height
+                    'thumbnail' => $post->node->thumbnail_src,
+                    'width' => $post->node->dimensions->width,
+                    'height' => $post->node->dimensions->height
                 ]
             ];
 
