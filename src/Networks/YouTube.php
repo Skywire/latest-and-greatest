@@ -230,11 +230,11 @@ class YouTube extends LatestAndGreatest {
             $videoDetailsResultObject = json_decode($videoDetailsResult);
 
             foreach ($videoDetailsResultObject->items as $videoItem) {
-                $array[$key]['views'] = $videoItem->statistics->viewCount;
-                $array[$key]['likes'] = $videoItem->statistics->likeCount;
-                $array[$key]['dislikes'] = $videoItem->statistics->dislikeCount;
-                $array[$key]['favourites'] = $videoItem->statistics->favoriteCount;
-                $array[$key]['comments'] = $videoItem->statistics->commentCount;
+                $array[$key]['views'] = isset($videoItem->statistics->viewCount) ? $videoItem->statistics->viewCount : 0;
+                $array[$key]['likes'] = isset($videoItem->statistics->likeCount) ? $videoItem->statistics->likeCount : 0;
+                $array[$key]['dislikes'] = isset($videoItem->statistics->dislikeCount) ? $videoItem->statistics->dislikeCount : 0;
+                $array[$key]['favourites'] = isset($videoItem->statistics->favoriteCount) ? $videoItem->statistics->favoriteCount : 0;
+                $array[$key]['comments'] = isset($videoItem->statistics->commentCount) ? $videoItem->statistics->commentCount : 0;
                 $array[$key]['iframe'] = $videoItem->player->embedHtml;
             }
         }
