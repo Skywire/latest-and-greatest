@@ -25,13 +25,19 @@ class Instagram extends LatestAndGreatest {
      * Define the API end point
      * @var String
      */
-    protected $endpoint = 'https://www.instagram.com/';
+    protected $endpoint = 'https://api.instagram.com/v1/';
 
     /**
-     * Prepare enpoint response variable
+     * Prepare endpoint response variable
      * @var Object
      */
-    protected $endpointResponse;
+    protected $endpointResponseUserData;
+
+    /**
+     * Prepare endpoint response variable
+     * @var Object
+     */
+    protected $endpointResponseUserMedia;
 
     /**
      * This fires when instance created
@@ -40,6 +46,7 @@ class Instagram extends LatestAndGreatest {
         try {
             parent::__construct($options);
             $this->setUserName();
+            $this->setAccessToken();
             parent::init();
         } catch (Exception $e) {
             echo '<pre>';
@@ -70,34 +77,87 @@ class Instagram extends LatestAndGreatest {
     }
 
     /**
-     * Get the Instagram API endpoint
+     * Set the access token
+     */
+    public function setAccessToken() {
+        if (!getenv('INSTAGRAM_ACCESS_TOKEN')) {
+            throw new Exception('No INSTAGRAM_ACCESS_TOKEN defined in your .env');
+        }
+
+        $this->accessToken = getenv('INSTAGRAM_ACCESS_TOKEN');
+    }
+
+    /**
+     * Get the access token
+     */
+    public function getAccessToken() {
+        return $this->accessToken;
+    }
+
+    /**
+     * Get the Instagram API User endpoint
      * @return String
      */
-    public function getPageDataApiEndpoint() {
-        $args = [
-            '__a' => 1
+    public function getUserDataApiEndpoint() {
+        $url = 'users/self';
+
+        $query = [
+            'access_token' => $this->getAccessToken()
         ];
 
-        return $this->endpoint . $this->userName . '/?' . urldecode(http_build_query($args));
+        return $this->endpoint . $url . '/?' . urldecode(http_build_query($query));
     }
 
     /**
      * Get endpoint response
      * @return Object
      */
-    public function getEndpointResponse() {
-        if (!$this->endpointResponse) {
+    public function getUserDataEndpointResponse() {
+        if (!$this->endpointResponseUserData) {
             // Get data from API
-            $endpointResult = @file_get_contents($this->getPageDataApiEndpoint());
+            $endpointResult = @file_get_contents($this->getUserDataApiEndpoint());
             if (!$endpointResult) {
                 throw new Exception('No data returned from endpoint');
             }
 
             // Convert to object
-            $this->endpointResponse = json_decode($endpointResult);
+            $this->endpointResponseUserData = json_decode($endpointResult);
         }
 
-        return $this->endpointResponse;
+        return $this->endpointResponseUserData;
+    }
+
+    /**
+     * Get the Instagram API User endpoint
+     * @return String
+     */
+    public function getUserMediaApiEndpoint() {
+        $url = 'users/self/media/recent';
+
+        $query = [
+            'access_token' => $this->getAccessToken()
+        ];
+
+        return $this->endpoint . $url . '/?' . urldecode(http_build_query($query));
+    }
+
+    /**
+     * Get endpoint response
+     * @return Object
+     */
+    public function getUserMediaEndpointResponse() {
+        if (!$this->endpointResponseUserMedia) {
+            // Get data from API
+            $endpointResult = @file_get_contents($this->getUserMediaApiEndpoint());
+            if (!$endpointResult) {
+                throw new Exception('No data returned from endpoint');
+            }
+
+            // Convert to object
+            $this->endpointResponseUserMedia = json_decode($endpointResult);
+        }
+
+        return $this->endpointResponseUserMedia;
     }
 
     /**
@@ -110,10 +170,11 @@ class Instagram extends LatestAndGreatest {
         ];
 
         // Get profile image data from API
-        $endpointResult = $this->getEndpointResponse();
+        $endpointResult = $this->getUserDataEndpointResponse();
+
         if ($endpointResult) {
             // Get image as data string
-            $imageDataString = @file_get_contents($endpointResult->graphql->user->profile_pic_url_hd);
+            $imageDataString = @file_get_contents($endpointResult->data->profile_picture);
 
             // Get image dimensions and mime type
             $imageData = getimagesizefromstring($imageDataString);
@@ -135,12 +196,12 @@ class Instagram extends LatestAndGreatest {
      */
     public function getStatisticsArray() {
         // Get api data
-        $data = $this->getEndpointResponse();
+        $endpointResult = $this->getUserDataEndpointResponse();
 
         // Create statistics array
         $statistics = [
-            'followers' => $data->graphql->user->edge_followed_by->count,
-            'following' => $data->graphql->user->edge_follow->count
+            'followers' => $endpointResult->data->counts->followed_by,
+            'following' => $endpointResult->data->counts->follows
         ];
 
         return $statistics;
@@ -152,22 +213,22 @@ class Instagram extends LatestAndGreatest {
      */
     public function getPostsArray() {
         // Get api data
-        $data = $this->getEndpointResponse();
+        $endpointResult = $this->getUserMediaEndpointResponse();
 
         // Create posts array
         $posts = [];
         $index = 0;
-        foreach ($data->graphql->user->edge_owner_to_timeline_media->edges as $post) {
+        foreach ($endpointResult->data as $post) {
             $posts[] = [
-                'id' => $post->node->shortcode,
-                'text' => $post->node->edge_media_to_caption->edges[0]->node->text,
-                'date' => $post->node->taken_at_timestamp,
-                'likes' => $post->node->edge_liked_by->count,
-                'comments' => $post->node->edge_media_to_comment->count,
+                'id' => $post->id,
+                'text' => $post->caption->text,
+                'date' => $post->created_time,
+                'likes' => $post->likes->count,
+                'comments' => $post->comments->count,
                 'media' => [
-                    'thumbnail' => $post->node->thumbnail_src,
-                    'width' => $post->node->dimensions->width,
-                    'height' => $post->node->dimensions->height
+                    'thumbnail' => $post->images->standard_resolution->url,
+                    'width' => $post->images->standard_resolution->width,
+                    'height' => $post->images->standard_resolution->height
                 ]
             ];
 
