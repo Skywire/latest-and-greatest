@@ -260,6 +260,7 @@ class Facebook extends LatestAndGreatest {
         foreach ($latestPosts as $post) {
             $array[$post['id']] = [
                 'id' => explode('_', $post['id'])[1],
+                'link' => 'https://www.facebook.com/' . explode('_', $post['id'])[1],
                 'text' => $post['message'],
                 'date' => strtotime($post['created_time'])
             ];
