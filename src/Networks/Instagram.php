@@ -222,7 +222,7 @@ class Instagram extends LatestAndGreatest {
             $posts[] = [
                 'id' => $post->id,
                 'link' => $post->link,
-                'text' => $post->caption->text,
+                'text' => isset($post->caption->text) ? $post->caption->text : '',
                 'date' => $post->created_time,
                 'likes' => $post->likes->count,
                 'comments' => $post->comments->count,
