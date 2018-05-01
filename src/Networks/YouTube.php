@@ -211,6 +211,7 @@ class YouTube extends LatestAndGreatest {
 
             $array[$key] = [
                 'videoId' => $video->id->videoId,
+                'link' => 'https://www.youtube.com/watch?v=' . $video->id->videoId,
                 'title' => $video->snippet->title,
                 'description' => $video->snippet->description,
                 'date' => strtotime($video->snippet->publishedAt),

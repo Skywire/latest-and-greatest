@@ -243,6 +243,7 @@ class Twitter extends LatestAndGreatest {
         foreach ($latestTweets as $tweet) {
             $array[$tweet->id] = [
                 'id' => $tweet->id,
+                'link' =>'http://twitter.com/' . $tweet->id,
                 'text' => $tweet->full_text,
                 'date' => strtotime($tweet->created_at),
                 'url' => 'http://twitter.com/statuses/' . $tweet->id
