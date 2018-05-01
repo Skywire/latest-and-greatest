@@ -221,6 +221,7 @@ class Instagram extends LatestAndGreatest {
         foreach ($endpointResult->data as $post) {
             $posts[] = [
                 'id' => $post->id,
+                'link' => $post->link,
                 'text' => $post->caption->text,
                 'date' => $post->created_time,
                 'likes' => $post->likes->count,
