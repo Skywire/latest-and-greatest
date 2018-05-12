@@ -307,8 +307,12 @@ class Facebook extends LatestAndGreatest {
         $object = json_decode($endpointResult);
 
         // If no media, return empty array
-        if (!isset($object->data[0]->media)) {
+        if (!isset($object->data[0]->media) || !isset($object->data[0]->subattachments->data[0]->media)) {
             return [];
+        }
+
+        if ($object->data[0]->subattachments->data[0]->media) {
+            return (array) $object->data[0]->subattachments->data[0]->media;
         }
 
         // Return media
