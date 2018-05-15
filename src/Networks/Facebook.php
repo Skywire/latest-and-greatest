@@ -311,7 +311,7 @@ class Facebook extends LatestAndGreatest {
             return [];
         }
 
-        if ($object->data[0]->subattachments->data[0]->media) {
+        if (isset($object->data[0]->subattachments->data[0]->media)) {
             return (array) $object->data[0]->subattachments->data[0]->media;
         }
 
