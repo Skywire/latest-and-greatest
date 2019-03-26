@@ -9,7 +9,7 @@ use Dotenv\Dotenv;
 use LatestAndGreatest\Networks\Pinterest;
 
 // Initialise Dotenv
-$dotenv = new Dotenv(dirname(__DIR__));
+$dotenv = Dotenv::create(dirname(__DIR__));
 $dotenv->load();
 
 class TestPinterest extends TestCase {
