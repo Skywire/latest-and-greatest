@@ -136,6 +136,7 @@ Luckily, there's a public endpoint that squirts out JSON for Instagram to get th
 The only variable we need to define in the `.env` is a username.   
 ```
 INSTAGRAM_USERNAME=XXXXX
+INSTAGRAM_ACCESS_TOKEN=XXXXX
 ```
 
 ##### Initialisation
