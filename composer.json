@@ -1,5 +1,5 @@
 {
-    "name": "ozpital/latest-and-greatest",
+    "name": "weareindi/latest-and-greatest",
     "description": "Plucking stats and latest posts from your social media to display on your site.",
     "keywords": ["socialmedia", "facebook", "instagram", "pinterest", "twitter", "youtube", "latest", "posts", "fav", "likes", "subscriber", "followers", "count"],
     "license": "MIT",
@@ -12,8 +12,9 @@
     "authors": [
         {
             "name": "Laurence Archer",
-            "email": "l.archer@ozpital.com",
-            "homepage": "https://ozpital.com"
+            "email": "laurence@weareindi.co.uk",
+            "homepage": "https://weareindi.co.uk",
+            "role": "Developer"
         }
     ],
     "autoload": {
