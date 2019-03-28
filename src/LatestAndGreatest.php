@@ -14,6 +14,12 @@ use Exception;
  */
 class LatestAndGreatest {
     /**
+     * Default cache state
+     * @var String
+     */
+    protected $cacheEnabled = true;
+
+    /**
      * Default cache directory
      * @var String
      */
@@ -49,22 +55,146 @@ class LatestAndGreatest {
             $this->maxResults = $options['max'];
         }
 
+        // If cache state is defined
+        if (isset($options['cache'])) {
+            $this->cacheEnabled = $options['cache'];
+        }
+
         // If cache directory defined
         if (isset($options['cacheDir'])) {
             $this->cacheDirectory = $options['cacheDir'];
         }
+
+        // Populate data variable
+        $this->data = $this->loadData();
     }
 
     /**
      * Initalise the specific data set
+     * @deprecated class initialised in construct.
      */
     public function init() {
-        // Update cache
-        $this->updateCache();
-
-        // Populate data variable
-        $this->getData();
     }
+
+    /**
+     * Check is a cache update is required
+     * @return boolean
+     */
+    protected function isUpdateRequired() {
+        // Does the file exist?
+        if (!file_exists($this->getCacheDirectory() . $this->cacheFileName)) {
+            // Make file
+            touch($this->getCacheDirectory() . $this->cacheFileName);
+            return true;
+        }
+
+        // Is it empty?
+        if (!filesize($this->getCacheDirectory() . $this->cacheFileName)) {
+           return true;
+        }
+
+        // Is the file age over the threshold?
+        if ((time() - $this->getCacheDuration()) > filemtime($this->getCacheDirectory() . $this->cacheFileName)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get cached data
+     *
+     * @return object
+     */
+    protected function getCachedData(){
+        return json_decode(file_get_contents($this->getCacheDirectory() . $this->cacheFileName));
+    }
+
+    /**
+     * Update the cache file
+     */
+    protected function updateCache($data = []) {
+        // Convert to json and save to cache file
+        file_put_contents($this->getCacheDirectory() . $this->cacheFileName, json_encode($data, JSON_FORCE_OBJECT));
+    }
+
+    /**
+     * Delete the desired cache
+     */
+    protected function deleteCache() {
+        // Does the file exist?
+        if (file_exists($this->getCacheDirectory() . $this->cacheFileName)) {
+            // Delete the file
+            unlink($this->getCacheDirectory() . $this->cacheFileName);
+        }
+        // Empty data variable
+        if ($this->data) {
+            unset($this->data);
+        }
+    }
+
+    protected function loadData() {
+        $data = [
+            'profile' => [],
+            'statistics' => [],
+            'latest' => []
+        ];
+
+        if ($this->cacheEnabled && !$this->isUpdateRequired()) {
+            $cacheddata = $this->getCachedData();
+            // Get current stats
+            $data['profile'] = $cacheddata->profile;
+            // Get current stats
+            $data['statistics'] = $cacheddata->statistics;
+            // Get latest data
+            $data['latest'] = $cacheddata->latest;
+        } else {
+            // Get current stats
+            $data['profile'] = $this->getProfileArray();
+            // Get current stats
+            $data['statistics'] = $this->getStatisticsArray();
+            // Get latest data
+            $data['latest'] = $this->getPostsArray();
+            if ($this->cacheEnabled) {
+                $this->updateCache($data);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get the cached data
+     * @return Array The stored data
+     */
+    public function getData() {
+        return $this->data;
+    }
+
+    /**
+     * Get profile
+     * @return Array
+     */
+    public function getProfile() {
+        return $this->data['profile'];
+    }
+
+    /**
+     * Get page/profile stats
+     * @return Array
+     */
+    public function getStats() {
+        return $this->data['statistics'];
+    }
+
+    /**
+     * Get the latest posts
+     * @return Array
+     */
+    public function getLatest() {
+        return $this->data['latest'];
+    }
+
 
     /**
      * Get cache directory
@@ -83,7 +213,7 @@ class LatestAndGreatest {
      * @param String $filename A valid string that can be used as a filename for the cache
      */
     public function setCacheFilename($filename) {
-        $this->$cacheFilename = $filename;
+        $this->cacheFilename = $filename;
     }
 
     /**
@@ -91,11 +221,11 @@ class LatestAndGreatest {
      * @return String The defined filename for the current cache
      */
     public function getCacheFilename() {
-        if (!$cacheFilename) {
+        if (!$this->cacheFilename) {
             throw new Exception('No cache filename set');
         }
 
-        return $this->$cacheFilename;
+        return $this->cacheFilename;
     }
 
     /**
@@ -111,40 +241,6 @@ class LatestAndGreatest {
     }
 
     /**
-     * Get the cache duration
-     * @return Integer The currently defined cache duration in seconds
-     */
-    public function getCacheDuration() {
-        return $this->cacheDuration;
-    }
-
-    /**
-     * Check is a cache update is required
-     * @return boolean
-     */
-    public function isUpdateRequired() {
-        // Does the file exist?
-        if (!file_exists($this->getCacheDirectory() . $this->cacheFileName)) {
-            // Make file
-            touch($this->getCacheDirectory() . $this->cacheFileName);
-
-            return true;
-        }
-
-        // Is it empty?
-        if (!filesize($this->getCacheDirectory() . $this->cacheFileName)) {
-           return true;
-        }
-
-        // Is the file age over the threshold?
-        if ((time() - $this->getCacheDuration()) > filemtime($this->getCacheDirectory() . $this->cacheFileName)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Set the max results your want to fetch from the desired API
      * @param Number $amount
      */
@@ -157,90 +253,34 @@ class LatestAndGreatest {
     }
 
     /**
-     * Update the cache file
+     * Get the cache duration
+     * @return Integer The currently defined cache duration in seconds
      */
-    public function updateCache() {
-        if (!$this->isUpdateRequired()) {
-            return false;
-        }
-
-        // Get current stats
-        $profile = $this->getProfileArray();
-
-        // Get current stats
-        $statistics = $this->getStatisticsArray();
-
-        // Get latest data
-        $latest = $this->getPostsArray();
-
-        // Combine arrays
-        $data = [
-            'profile' => $profile,
-            'statistics' => $statistics,
-            'latest' => $latest
-        ];
-
-        // Convert to json and save to cache file
-        file_put_contents($this->getCacheDirectory() . $this->cacheFileName, json_encode($data));
+    public function getCacheDuration() {
+        return $this->cacheDuration;
     }
 
     /**
-     * Delete the desired cache
-     */
-    public function deleteCache() {
-        // Does the file exist?
-        if (file_exists($this->getCacheDirectory() . $this->cacheFileName)) {
-            // Delete the file
-            unlink($this->getCacheDirectory() . $this->cacheFileName);
-        }
-
-        // Empty data variable
-        if ($this->data) {
-            unset($this->data);
-        }
-    }
-
-    /**
-     * Get the cached data
-     * @return Array The stored data
-     */
-    function getData() {
-        $this->data = json_decode(file_get_contents($this->getCacheDirectory() . $this->cacheFileName));
-    }
-
-    /**
-     * Get profile
+     * Get page profile array
      * @return Array
      */
-    public function getProfile() {
-        if (!isset($this->data->profile)) {
-            return [];
-        }
-
-        return $this->data->profile;
+    protected function getProfileArray() {
+        return [];
     }
 
     /**
-     * Get page/profile stats
+     * Get releavant statistics
      * @return Array
      */
-    public function getStats() {
-        if (!isset($this->data->statistics)) {
-            return [];
-        }
-
-        return $this->data->statistics;
+    protected function getStatisticsArray() {
+        return [];
     }
 
     /**
-     * Get the latest posts
+     * Get an array of posts
      * @return Array
      */
-    public function getLatest() {
-        if (!isset($this->data->latest)) {
-            return [];
-        }
-
-        return $this->data->latest;
+    protected function getPostsArray() {
+        return [];
     }
 }
