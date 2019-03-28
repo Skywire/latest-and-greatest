@@ -65,12 +65,9 @@ class Instagram extends LatestAndGreatest {
 
     /**
      * Set the page name
+     * @deprecated Not required for loading profile.
      */
     public function setUserName($userName = false) {
-        if (!$userName && !getenv('INSTAGRAM_USERNAME')) {
-            throw new Exception('No INSTAGRAM_USERNAME defined in your .env or username is not set in options');
-        }
-
         if ($userName) {
             $this->userName = $userName;
         } else {
