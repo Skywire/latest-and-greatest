@@ -107,7 +107,7 @@ class LatestAndGreatest {
      * @return object
      */
     protected function getCachedData(){
-        return json_decode(file_get_contents($this->getCacheDirectory() . $this->cacheFileName));
+        return json_decode(file_get_contents($this->getCacheDirectory() . $this->cacheFileName), true);
     }
 
     /**
@@ -141,13 +141,7 @@ class LatestAndGreatest {
         ];
 
         if ($this->cacheEnabled && !$this->isUpdateRequired()) {
-            $cacheddata = $this->getCachedData();
-            // Get current stats
-            $data['profile'] = $cacheddata->profile;
-            // Get current stats
-            $data['statistics'] = $cacheddata->statistics;
-            // Get latest data
-            $data['latest'] = $cacheddata->latest;
+            $data = $this->getCachedData();
         } else {
             // Get current stats
             $data['profile'] = $this->getProfileArray();
