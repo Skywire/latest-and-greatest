@@ -17,25 +17,31 @@ class Instagram extends LatestAndGreatest {
 
     /**
      * Initalise the API secret variable
-     * @var String
+     * @var string
      */
     protected $userName;
 
     /**
+     * Define number of results
+     * @var integer
+     */
+    protected $maxResults = 4;
+
+    /**
      * Define the API end point
-     * @var String
+     * @var string
      */
     protected $endpoint = 'https://api.instagram.com/v1/';
 
     /**
      * Prepare endpoint response variable
-     * @var Object
+     * @var object
      */
     protected $endpointResponseUserData;
 
     /**
      * Prepare endpoint response variable
-     * @var Object
+     * @var object
      */
     protected $endpointResponseUserMedia;
 
@@ -142,6 +148,7 @@ class Instagram extends LatestAndGreatest {
         $url = 'users/self/media/recent';
 
         $query = [
+            'count' => $this->maxResults,
             'access_token' => $this->getAccessToken()
         ];
 
@@ -226,7 +233,7 @@ class Instagram extends LatestAndGreatest {
 
         // Create posts array
         $posts = [];
-        $index = 0;
+
         foreach ($endpointResult->data as $post) {
             $posts[] = [
                 'id' => $post->id,
@@ -242,10 +249,6 @@ class Instagram extends LatestAndGreatest {
                 ]
             ];
 
-            $index ++;
-            if ($index === $this->maxResults) {
-                break;
-            }
         }
 
         return $posts;
