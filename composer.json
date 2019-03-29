@@ -4,6 +4,7 @@
     "keywords": ["socialmedia", "facebook", "instagram", "pinterest", "twitter", "youtube", "latest", "posts", "fav", "likes", "subscriber", "followers", "count"],
     "license": "MIT",
     "type": "project",
+    "version": "1.1.0",
     "require": {
         "vlucas/phpdotenv": "^3.3.3",
         "abraham/twitteroauth": "^1.0.1"
