@@ -15,41 +15,48 @@ use Exception;
 class LatestAndGreatest {
     /**
      * Default cache state
-     * @var String
+     * @var string
      */
     protected $cacheEnabled = true;
 
     /**
+     * Default output data type, default to json object type
+     * @var string
+     */
+    protected $objectOutput = true;
+
+    /**
      * Default cache directory
-     * @var String
+     * @var string
      */
     protected $cacheDirectory = './cache/';
 
     /**
      * Initalise Cache Filename
-     * @var String
+     * @var string
      */
     protected $cacheFilename;
 
     /**
      * Default cache duration in seconds
-     * @var Integer
+     * @var integer
      */
     protected $cacheDuration = (60 * 60);
 
     /**
      * Default max results amount
-     * @var Integer
+     * @var integer
      */
     protected $maxResults = 1;
 
     /**
      * Initalise the data variable
-     * @var Array
+     * @var array
      */
     protected $data;
 
-    public function __construct($options = []) {
+    public function __construct($options = [])
+    {
         // If max results defined
         if (isset($options['max'])) {
             $this->maxResults = $options['max'];
@@ -65,8 +72,11 @@ class LatestAndGreatest {
             $this->cacheDirectory = $options['cacheDir'];
         }
 
+        if (isset($options['objectOutput'])) {
+            $this->objectOutput = $options['objectOutput'];
+        }
         // Populate data variable
-        $this->data = $this->loadData();
+        $this->data = $this->fetchData();
     }
 
     /**
@@ -103,7 +113,6 @@ class LatestAndGreatest {
 
     /**
      * Get cached data
-     *
      * @return object
      */
     protected function getCachedData(){
@@ -133,7 +142,7 @@ class LatestAndGreatest {
         }
     }
 
-    protected function loadData() {
+    protected function fetchData() {
         $data = [
             'profile' => [],
             'statistics' => [],
@@ -141,14 +150,20 @@ class LatestAndGreatest {
         ];
 
         if ($this->cacheEnabled && !$this->isUpdateRequired()) {
-            $data = $this->getCachedData();
+            $cachedData = $this->getCachedData();
+            // Get current stats
+            $data['profile'] = $this->convertOutputData($cachedData['profile']);
+            // Get current stats
+            $data['statistics'] = $this->convertOutputData($cachedData['statistics']);
+            // Get latest data
+            $data['latest'] = $this->convertOutputData($cachedData['latest']);
         } else {
             // Get current stats
-            $data['profile'] = $this->getProfileArray();
+            $data['profile'] = $this->convertOutputData($this->getProfileArray());
             // Get current stats
-            $data['statistics'] = $this->getStatisticsArray();
+            $data['statistics'] = $this->convertOutputData($this->getStatisticsArray());
             // Get latest data
-            $data['latest'] = $this->getPostsArray();
+            $data['latest'] = $this->convertOutputData($this->getPostsArray());
             if ($this->cacheEnabled) {
                 $this->updateCache($data);
             }
@@ -158,8 +173,27 @@ class LatestAndGreatest {
     }
 
     /**
+     * Get proffered data type
+     * Implement backwards compatibility
+     * @return mixed The converted data
+     */
+    protected function convertOutputData($array){
+        if($this->objectOutput){
+            $array = $this->arrayToObject($array);
+        }
+        return $array;
+    }
+    /**
+     * convert array to object
+     * @return object The stored data
+     */
+    protected function arrayToObject($array){
+        // Json conversion enforces recersive conversion
+        return json_decode(json_encode($array), FALSE);
+    }
+    /**
      * Get the cached data
-     * @return Array The stored data
+     * @return array The stored data
      */
     public function getData() {
         return $this->data;
@@ -167,7 +201,7 @@ class LatestAndGreatest {
 
     /**
      * Get profile
-     * @return Array
+     * @return array
      */
     public function getProfile() {
         return $this->data['profile'];
@@ -175,7 +209,7 @@ class LatestAndGreatest {
 
     /**
      * Get page/profile stats
-     * @return Array
+     * @return array
      */
     public function getStats() {
         return $this->data['statistics'];
@@ -183,7 +217,7 @@ class LatestAndGreatest {
 
     /**
      * Get the latest posts
-     * @return Array
+     * @return array
      */
     public function getLatest() {
         return $this->data['latest'];
@@ -192,7 +226,8 @@ class LatestAndGreatest {
 
     /**
      * Get cache directory
-     * @return String The currently defined cache directory
+     * @return string The currently defined cache directory
+     * @throws Exception Invalid cache directory
      */
     public function getCacheDirectory() {
         if (!is_dir($this->cacheDirectory)) {
@@ -212,7 +247,8 @@ class LatestAndGreatest {
 
     /**
      * Get the cache filename
-     * @return String The defined filename for the current cache
+     * @return string The defined filename for the current cache
+     * @throws Exception No cache filename set
      */
     public function getCacheFilename() {
         if (!$this->cacheFilename) {
@@ -224,7 +260,8 @@ class LatestAndGreatest {
 
     /**
      * Update the default duration period
-     * @param Integer $duration A number in seconds
+     * @param integer $duration A number in seconds
+     * @throws Exception Invalid cache duration
      */
     public function setCacheDuration($duration) {
         if (!is_int($duration)) {
@@ -236,7 +273,8 @@ class LatestAndGreatest {
 
     /**
      * Set the max results your want to fetch from the desired API
-     * @param Number $amount
+     * @param integer $amount
+     * @throws Exception Invalid number
      */
     public function setMaxResults($amount) {
         if (!is_int($amount)) {
@@ -248,7 +286,7 @@ class LatestAndGreatest {
 
     /**
      * Get the cache duration
-     * @return Integer The currently defined cache duration in seconds
+     * @return integer The currently defined cache duration in seconds
      */
     public function getCacheDuration() {
         return $this->cacheDuration;
@@ -256,7 +294,7 @@ class LatestAndGreatest {
 
     /**
      * Get page profile array
-     * @return Array
+     * @return array
      */
     protected function getProfileArray() {
         return [];
@@ -264,7 +302,7 @@ class LatestAndGreatest {
 
     /**
      * Get releavant statistics
-     * @return Array
+     * @return array
      */
     protected function getStatisticsArray() {
         return [];
@@ -272,7 +310,7 @@ class LatestAndGreatest {
 
     /**
      * Get an array of posts
-     * @return Array
+     * @return array
      */
     protected function getPostsArray() {
         return [];
